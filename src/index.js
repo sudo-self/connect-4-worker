@@ -336,6 +336,7 @@ function getHTML() {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
+
 body {
   font-family: 'Segoe UI', Roboto, sans-serif;
   background: #101820;
@@ -345,6 +346,7 @@ body {
   align-items: center;
   padding: 10px;
   color: white;
+  touch-action: manipulation; /* Prevents double-tap zoom */
 }
 
 .splash {
@@ -356,14 +358,16 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 10;
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.4s ease-out;
   backdrop-filter: blur(8px);
+  padding: 20px;
 }
 .splash h1 {
-  font-size: 3rem;
-  margin-bottom: 25px;
+  font-size: clamp(2rem, 6vw, 3rem);
+  margin-bottom: 20px;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   letter-spacing: 2px;
+  text-align: center;
 }
 .splash input {
   padding: 14px;
@@ -371,7 +375,8 @@ body {
   border: none;
   border-radius: 12px;
   font-size: 1rem;
-  width: 240px;
+  width: 85%;
+  max-width: 280px;
   text-align: center;
   outline: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -381,6 +386,10 @@ body {
 .splash .color-buttons {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 340px;
+  justify-content: center;
 }
 .splash button {
   padding: 16px 24px;
@@ -388,14 +397,16 @@ body {
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  width: 160px;
-  transition: all 0.3s ease;
+  width: 150px;
+  transition: transform 0.15s ease, filter 0.15s ease;
   font-weight: bold;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  touch-action: manipulation;
 }
-.splash button:hover {
-  transform: scale(1.08);
-  filter: brightness(1.1);
+.splash button:active {
+  transform: scale(0.96);
+  filter: brightness(0.95);
 }
 .redBtn {
   background: #ff4b5c;
@@ -413,7 +424,7 @@ body {
   margin: 15px 0;
 }
 h2 {
-  font-size: 2.3rem;
+  font-size: clamp(1.8rem, 5vw, 2.3rem);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
 }
 #statusText {
@@ -426,7 +437,7 @@ h2 {
 
 .board-container {
   background: rgba(15, 25, 40, 0.85);
-  padding: 15px;
+  padding: 10px;
   border-radius: 25px;
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7);
   width: 100%;
@@ -436,15 +447,18 @@ h2 {
 .board {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 6px;
   background: #121c2b;
-  padding: 12px;
+  padding: 10px;
   border-radius: 20px;
 }
 .column {
-  cursor: pointer;
   display: flex;
   flex-direction: column;
+  min-height: 100px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .cell {
   width: 100%;
@@ -455,11 +469,7 @@ h2 {
   margin: 2px;
   overflow: hidden;
   box-shadow: inset 0 4px 7px rgba(0, 0, 0, 0.9);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.column:hover .cell {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px 3px rgba(255, 255, 255, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .cell.red::before,
 .cell.yellow::before {
@@ -489,13 +499,13 @@ h2 {
   cursor: pointer;
   width: 100%;
   max-width: 340px;
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.15s, box-shadow 0.15s;
   font-weight: 900;
   box-shadow: 0 8px 18px rgba(255, 150, 150, 0.6);
 }
-.reset-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 10px 24px rgba(255, 180, 180, 0.9);
+.reset-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 8px 18px rgba(255, 180, 180, 0.8);
 }
 
 .connection-status {
@@ -545,17 +555,17 @@ footer {
     width: 100%;
   }
   .board {
-    gap: 5px;         
-    padding: 8px;      
+    gap: 4px;         
+    padding: 6px;      
   }
   .board-container {
-    padding-left: 8px; 
-    padding-right: 8px;
+    padding: 8px;
   }
   .cell {
     margin: 1px;         
   }
 }
+
 </style>
 </head>
 <body>
