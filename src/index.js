@@ -346,7 +346,7 @@ body {
   align-items: center;
   padding: 10px;
   color: white;
-  touch-action: manipulation; /* Prevents double-tap zoom */
+  touch-action: manipulation;
 }
 
 .splash {
