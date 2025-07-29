@@ -160,11 +160,26 @@ export class Room {
 	  this.lastActivity = Date.now();
 	  const data = JSON.parse(e.data);
 
-	  if (data.type === "name") {
-		this.playerNames[player] = data.name || `Player ${player}`;
-		this.playerColors[player] = data.color || player;
-		this.broadcastNamesAndColors();
-	  }
+        if (data.type === "name") {
+          this.playerNames[player] = data.name || `Player ${player}`;
+
+          const requestedColor = data.color;
+          const usedColors = Object.values(this.playerColors);
+          const availableColors = [1, 2].filter(c => !usedColors.includes(c));
+
+       
+          if (!usedColors.includes(requestedColor)) {
+            this.playerColors[player] = requestedColor;
+          } else if (availableColors.length > 0) {
+            this.playerColors[player] = availableColors[0];
+          } else {
+         
+            this.playerColors[player] = player;
+          }
+
+          this.broadcastNamesAndColors();
+        }
+
 
 	  if (data.type === "move") {
 		if (!this.gameStarted || this.winner) return;
@@ -575,15 +590,20 @@ footer {
 	const MAX_RECONNECT_ATTEMPTS = 5;
 	const RECONNECT_DELAY = 2000;
 
-	document.querySelectorAll("#splash button").forEach(btn => {
-	  btn.addEventListener("click", () => {
-		myColor = parseInt(btn.dataset.color);
-		myName = document.getElementById("nameInput").value.trim() || "Player";
-		if (myName.length > 12) myName = myName.substring(0, 12);
-		document.getElementById("splash").style.display = "none";
-		init();
-	  });
-	});
+ document.querySelectorAll("#splash button").forEach(btn => {
+   btn.addEventListener("click", () => {
+     const selectedColor = parseInt(btn.dataset.color);
+
+     myColor = selectedColor;
+     myName = document.getElementById("nameInput").value.trim() || "Player";
+     if (myName.length > 12) myName = myName.substring(0, 12);
+
+     document.getElementById("splash").style.display = "none";
+     init();
+   });
+ });
+
+
 
 	function createBoardElement() {
 	  const boardEl = document.getElementById("board");
@@ -669,6 +689,17 @@ footer {
 	  }
 	}
 
+function updateColorButtonStates() {
+  document.querySelectorAll("#splash button").forEach(btn => {
+    const color = parseInt(btn.dataset.color);
+    const isTaken = Object.values(colors).includes(color);
+    btn.disabled = isTaken;
+    btn.style.opacity = isTaken ? 0.5 : 1;
+    btn.style.cursor = isTaken ? "not-allowed" : "pointer";
+  });
+}
+
+
 	function connectWebSocket(roomId) {
 	  updateConnectionStatus(false);
 	  const wsUrl = \`\${location.origin.replace("http","ws")}/room/\${roomId}\`;
@@ -696,46 +727,58 @@ footer {
 		}
 	  };
 	  
-	  ws.onmessage = (e) => {
-		try {
-		  const data = JSON.parse(e.data);
+ws.onmessage = (e) => {
+  try {
+    const data = JSON.parse(e.data);
 
-		  if (data.type === "init") {
-			player = data.player;
-			board = data.board;
-			turn = data.turn;
-			names = data.names || names;
-			colors = data.colors || colors;
-			winner = data.winner;
-			gameStarted = data.gameStarted;
-			ws.send(JSON.stringify({ type: "name", name: myName, color: myColor }));
-			renderBoard();
-			moveLocked = false;
-			updateConnectionStatus(true);
-		  }
+    if (data.type === "init") {
+      player = data.player;
+      board = data.board;
+      turn = data.turn;
+      names = data.names || names;
+      colors = data.colors || colors;
+      winner = data.winner;
+      gameStarted = data.gameStarted;
 
-		  if (data.type === "update") {
-			board = data.board;
-			turn = data.turn;
-			names = data.names || names;
-			colors = data.colors || colors;
-			winner = data.winner;
-			gameStarted = data.gameStarted;
-			renderBoard();
-			moveLocked = (turn !== player || winner);
-		  }
+      updateColorButtonStates(); 
 
-		  if (data.type === "names") {
-			names = data.names;
-			colors = data.colors;
-			updateStatus();
-		  }
-		} catch (error) {
-		  console.error("Error processing message:", error);
-		}
-	  };
+      if (myColor === null && Object.values(colors).length === 1) {
+        const takenColor = Object.values(colors)[0];
+        myColor = takenColor === 1 ? 2 : 1;
+        document.getElementById("splash").style.display = "none"; 
+        init();
+        return;
+      }
 
-	
+      ws.send(JSON.stringify({ type: "name", name: myName, color: myColor }));
+      renderBoard();
+      moveLocked = false;
+      updateConnectionStatus(true);
+    }
+
+    if (data.type === "update") {
+      board = data.board;
+      turn = data.turn;
+      names = data.names || names;
+      colors = data.colors || colors;
+      winner = data.winner;
+      gameStarted = data.gameStarted;
+      renderBoard();
+      moveLocked = (turn !== player || winner);
+    }
+
+    if (data.type === "names") {
+      names = data.names;
+      colors = data.colors;
+      updateColorButtonStates(); // Re-check if color buttons should be disabled
+      updateStatus();
+    }
+  } catch (error) {
+    console.error("Error processing message:", error);
+  }
+};
+
+
 	  const pingInterval = setInterval(() => {
 		if (ws.readyState === WebSocket.OPEN) {
 		  try {
@@ -804,6 +847,13 @@ footer {
 </body>
 </html>`;
 }
+
+
+
+
+
+
+
 
 
 
