@@ -694,7 +694,7 @@ footer {
 		  connectWebSocket(data.roomId);
 		} catch (error) {
 		  console.error("Error creating room:", error);
-		  document.getElementById("statusText").textContent = "Failed to create game. Please refresh.";
+		  document.getElementById("statusText").textContent = "failed to connect...";
 		}
 	  }
 	}
@@ -724,7 +724,7 @@ function updateColorButtonStates() {
 	  ws.onerror = (error) => {
 		console.error("WebSocket error:", error);
 		updateConnectionStatus(false);
-		document.getElementById("statusText").textContent = "Connection error. Trying to reconnect...";
+		document.getElementById("statusText").textContent = "Reconnecting...";
 		attemptReconnect(roomId);
 	  };
 	  
@@ -780,7 +780,7 @@ ws.onmessage = (e) => {
     if (data.type === "names") {
       names = data.names;
       colors = data.colors;
-      updateColorButtonStates(); // Re-check if color buttons should be disabled
+      updateColorButtonStates();
       updateStatus();
     }
   } catch (error) {
@@ -809,7 +809,7 @@ ws.onmessage = (e) => {
 
 	function attemptReconnect(roomId) {
 	  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-		document.getElementById("statusText").textContent = "Failed to reconnect. Please refresh the page.";
+		document.getElementById("statusText").textContent = "Failed to reconnect...";
 		return;
 	  }
 	  
@@ -830,7 +830,7 @@ ws.onmessage = (e) => {
 		if (navigator.share) {
 		  await navigator.share({
 			title: "Connect 4 Multiplayer",
-			text: "Join my Connect 4 game!",
+			text: "Join the game!",
 			url: window.location.href,
 		  });
 		} else {
