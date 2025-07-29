@@ -297,20 +297,14 @@ function getHTML() {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Connect 4 Multiplayer</title>
-
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json" />
-
-  <!-- Icons in your requested order -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icon192.png" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="icon" type="image/png" sizes="512x512" href="/icon512.png" />
-
-  <!-- Theme color -->
   <meta name="theme-color" content="#000000" />
 
-  <!-- Service Worker registration -->
+
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(() => {
@@ -318,6 +312,7 @@ function getHTML() {
       });
     }
   </script>
+  
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
