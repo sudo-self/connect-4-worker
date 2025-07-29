@@ -36,6 +36,31 @@ export default {
       });
     }
 
+    if (url.pathname === "/sw.js") {
+      return new Response(`
+        self.addEventListener('install', event => {
+          event.waitUntil(
+            caches.open('v1').then(cache => cache.addAll([
+              '/',
+              '/manifest.json',
+              '/apple-touch-icon.png',
+              '/icon192.png',
+              '/favicon.ico',
+              '/icon512.png'
+            ]))
+          );
+        });
+
+        self.addEventListener('fetch', event => {
+          event.respondWith(
+            caches.match(event.request).then(response => response || fetch(event.request))
+          );
+        });
+      `, {
+        headers: { "Content-Type": "application/javascript" }
+      });
+    }
+
     if (url.pathname === "/") {
       return new Response(getHTML(), {
         headers: { "Content-Type": "text/html; charset=utf-8" }
@@ -59,6 +84,7 @@ export default {
     return new Response("Not Found", { status: 404 });
   },
 };
+
 
 
 
