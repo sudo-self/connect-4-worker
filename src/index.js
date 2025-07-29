@@ -673,7 +673,7 @@ function getHTML() {
 	  }
 	});
   </script>
-  <footer>c4.JesseJesse.workers.dev</footer>
+  <footer>c4.JesseJesse.com</footer>
 </body>
 </html>`;
 }
