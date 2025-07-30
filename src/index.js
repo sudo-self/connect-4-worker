@@ -327,243 +327,277 @@ function getHTML() {
     }
   </script>
 
-  <style>
-  
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  background: #101820;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-  color: white;
-  touch-action: manipulation;
-}
-
-.splash {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  animation: fadeIn 0.4s ease-out;
-  backdrop-filter: blur(8px);
-  padding: 20px;
-}
-.splash h1 {
-  font-size: clamp(2rem, 6vw, 3rem);
-  margin-bottom: 20px;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-  letter-spacing: 2px;
-  text-align: center;
-}
-.splash input {
-  padding: 14px;
-  margin-bottom: 20px;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  width: 85%;
-  max-width: 280px;
-  text-align: center;
-  outline: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  background: #1a1a2e;
-  color: white;
-}
-.splash .color-buttons {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 340px;
-  justify-content: center;
-}
-.splash button {
-  padding: 16px 24px;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  width: 150px;
-  transition: transform 0.15s ease, filter 0.15s ease;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  user-select: none;
-  touch-action: manipulation;
-}
-.splash button:active {
-  transform: scale(0.96);
-  filter: brightness(0.95);
-}
-.redBtn {
-  background: #ff4b5c;
-  color: white;
-  box-shadow: 0 4px 10px rgba(255, 75, 92, 0.6);
-}
-.yellowBtn {
-  background: #f9ed69;
-  color: #222;
-  box-shadow: 0 4px 10px rgba(249, 237, 105, 0.6);
-}
-
-.game-header {
-  text-align: center;
-  margin: 15px 0;
-}
-h2 {
-  font-size: clamp(1.8rem, 5vw, 2.3rem);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-}
-#statusText {
-  font-size: 1.2rem;
-  margin-top: 5px;
-  min-height: 1.5rem;
-  font-weight: 600;
-  color: #eee;
-}
-
-.board-container {
-  background: rgba(15, 25, 40, 0.85);
-  padding: 10px;
-  border-radius: 25px;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7);
-  width: 100%;
-  max-width: 720px;
-  backdrop-filter: blur(5px);
-}
-.board {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  background: #121c2b;
-  padding: 10px;
-  border-radius: 20px;
-}
-.column {
-  display: flex;
-  flex-direction: column;
-  min-height: 100px;
-  padding-bottom: 5px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.cell {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background: #0f3460;
-  border-radius: 50%;
-  position: relative;
-  margin: 2px;
-  overflow: hidden;
-  box-shadow: inset 0 4px 7px rgba(0, 0, 0, 0.9);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.cell.red::before,
-.cell.yellow::before {
-  content: '';
-  position: absolute;
-  inset: 15%;
-  border-radius: 50%;
-  box-shadow: 0 0 20px 5px currentColor;
-}
-.cell.red::before {
-  background: #ff4b5c;
-  color: #ff4b5c;
-}
-.cell.yellow::before {
-  background: #f9ed69;
-  color: #f9ed69;
-}
-
-.reset-btn {
-  margin-top: 20px;
-  padding: 14px 24px;
-  font-size: 1.1rem;
-  background: linear-gradient(45deg, #ff4b5c, #f9ed69);
-  border: none;
-  border-radius: 35px;
-  color: #121212;
-  cursor: pointer;
-  width: 100%;
-  max-width: 340px;
-  transition: transform 0.15s, box-shadow 0.15s;
-  font-weight: 900;
-  box-shadow: 0 8px 18px rgba(255, 150, 150, 0.6);
-}
-.reset-btn:active {
-  transform: scale(0.96);
-  box-shadow: 0 8px 18px rgba(255, 180, 180, 0.8);
-}
-
-.connection-status {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  background: rgba(0, 0, 0, 0.6);
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 0 4px black;
-}
-.connection-status.connected {
-  background: rgba(40, 167, 69, 0.9);
-}
-.connection-status.disconnected {
-  background: rgba(220, 53, 69, 0.9);
-}
-
-footer {
-  margin-top: auto;
-  padding: 10px;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-align: center;
-  letter-spacing: 1.2px;
-  user-select: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
-  to {
-    opacity: 1;
-  }
-}
 
-@media (max-width: 600px) {
-  .splash .color-buttons {
+  body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #101820;
+    min-height: 100vh;
+    display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    color: white;
+    touch-action: manipulation;
+  }
+
+  .splash {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    animation: fadeIn 0.4s ease-out;
+    backdrop-filter: blur(8px);
+    padding: 20px;
+  }
+  .splash h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    margin-bottom: 8px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  .mp-glass {
+    width: fit-content;
+    margin: 0 auto 24px auto;
+  }
+
+  .multiplayer-text {
+    margin: 0;
+    font-family: monospace;
+    font-size: clamp(14px, 3vw, 16px);
+    font-weight: bold;
+    text-align: center;
+    background: linear-gradient(90deg, red, yellow);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: mp-shimmer 2s linear infinite;
+  }
+
+  @keyframes mp-shimmer {
+    to {
+      background-position: -200% center;
+    }
+  }
+
+  .splash input {
+    padding: 14px;
+    margin-bottom: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    font-size: 1rem;
+    width: 85%;
+    max-width: 280px;
+    text-align: center;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    color: white;
+  }
+
+  .splash .color-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
     width: 100%;
+    max-width: 340px;
+    justify-content: center;
   }
   .splash button {
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 64px;
+    height: 64px;
+    transition: transform 0.15s ease, filter 0.15s ease;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    user-select: none;
+    touch-action: manipulation;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    font-size: 1rem;
+  }
+  .splash button:active {
+    transform: scale(0.96);
+    filter: brightness(0.95);
+  }
+  .redBtn {
+    background: #ff4b5c;
+    color: white;
+    box-shadow: 0 4px 10px rgba(255, 75, 92, 0.6);
+  }
+  .yellowBtn {
+    background: #f9ed69;
+    color: #222;
+    box-shadow: 0 4px 10px rgba(249, 237, 105, 0.6);
+  }
+
+  .game-header {
+    text-align: center;
+    margin: 15px 0;
+  }
+  h2 {
+    font-size: clamp(1.8rem, 5vw, 2.3rem);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  }
+  #statusText {
+    font-size: 1.2rem;
+    margin-top: 5px;
+    min-height: 1.5rem;
+    font-weight: 600;
+    color: #eee;
+  }
+
+  .board-container {
+    background: rgba(15, 25, 40, 0.85);
+    padding: 10px;
+    border-radius: 25px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7);
     width: 100%;
+    max-width: 720px;
+    backdrop-filter: blur(5px);
   }
   .board {
-    gap: 4px;         
-    padding: 6px;      
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    background: #121c2b;
+    padding: 10px;
+    border-radius: 20px;
   }
-  .board-container {
-    padding: 8px;
+  .column {
+    display: flex;
+    flex-direction: column;
+    min-height: 100px;
+    padding-bottom: 5px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .cell {
-    margin: 1px;         
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #0f3460;
+    border-radius: 50%;
+    position: relative;
+    margin: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 4px 7px rgba(0, 0, 0, 0.9);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-}
+  .cell.red::before,
+  .cell.yellow::before {
+    content: '';
+    position: absolute;
+    inset: 15%;
+    border-radius: 50%;
+    box-shadow: 0 0 20px 5px currentColor;
+  }
+  .cell.red::before {
+    background: #ff4b5c;
+    color: #ff4b5c;
+  }
+  .cell.yellow::before {
+    background: #f9ed69;
+    color: #f9ed69;
+  }
+
+  .reset-btn {
+    margin-top: 20px;
+    padding: 14px 24px;
+    font-size: 1.1rem;
+    background: linear-gradient(45deg, #ff4b5c, #f9ed69);
+    border: none;
+    border-radius: 35px;
+    color: #121212;
+    cursor: pointer;
+    width: 100%;
+    max-width: 340px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(255, 150, 150, 0.6);
+  }
+  .reset-btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 8px 18px rgba(255, 180, 180, 0.8);
+  }
+
+  .connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    background: rgba(0, 0, 0, 0.6);
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 4px black;
+  }
+  .connection-status.connected {
+    background: rgba(40, 167, 69, 0.9);
+  }
+  .connection-status.disconnected {
+    background: rgba(220, 53, 69, 0.9);
+  }
+
+  footer {
+    margin-top: auto;
+    padding: 10px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    letter-spacing: 1.2px;
+    user-select: none;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .splash .color-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+    .splash button {
+      width: 100%;
+      height: 56px;
+      border-radius: 12px; /* pill shape on mobile */
+      font-size: 1.1rem;
+      padding: 0;
+    }
+    .board {
+      gap: 4px;
+      padding: 6px;
+    }
+    .board-container {
+      padding: 8px;
+    }
+    .cell {
+      margin: 1px;
+    }
+  }
 
   .winner-overlay {
     position: fixed;
@@ -585,27 +619,35 @@ footer {
     0%, 100% { color: gold; }
     50% { color: white; }
   }
-
 </style>
-
 </head>
 <body>
   <div class="splash" id="splash">
     <h1>Connect 4</h1>
+
+    <div class="mp-glass">
+      <div class="multiplayer-text">MULTIPLAYER</div>
+    </div>
+
     <input id="nameInput" placeholder="Enter your name" maxlength="12"/>
+
     <div class="color-buttons">
       <button class="redBtn" data-color="1">Red</button>
       <button class="yellowBtn" data-color="2">Yellow</button>
     </div>
   </div>
+
   <div class="connection-status disconnected" id="connectionStatus">Disconnected</div>
+
   <div class="game-header">
     <h2>Connect 4</h2>
     <p id="statusText">Loading...</p>
   </div>
+
   <div class="board-container" id="boardContainer">
     <div class="board" id="board"></div>
   </div>
+
   <button class="reset-btn" id="inviteBtn">send invite</button>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -678,7 +720,7 @@ footer {
       }
       if (winner) {
         status.textContent = \`\${names[winner]} wins!\`;
-        triggerWinnerCelebration(names[winner]);   // <-- Trigger celebration
+        triggerWinnerCelebration(names[winner]);
         return;
       }
       if (turn === player) {
@@ -689,14 +731,12 @@ footer {
     }
 
     function triggerWinnerCelebration(name) {
-      // Add overlay
       const overlay = document.createElement("div");
       overlay.className = "winner-overlay";
       overlay.innerHTML = \`<div class="winner-text">🎉 \${name} WINS! 🎉</div>\`;
       document.body.appendChild(overlay);
 
-      // Confetti animation
-      const duration = 2.5 * 1000;
+      const duration = 2500;
       const end = Date.now() + duration;
       (function frame() {
         confetti({ particleCount: 5, angle: 60, spread: 70, origin: { x: 0 } });
@@ -704,12 +744,11 @@ footer {
         if (Date.now() < end) {
           requestAnimationFrame(frame);
         }
-      }());
+      })();
 
-      // Automatically restart after celebration
       setTimeout(() => {
         window.location.reload();
-      }, 2500);
+      }, duration);
     }
 
     function makeMove(col) {
