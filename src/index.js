@@ -319,7 +319,6 @@ function getHTML() {
   <link rel="icon" type="image/png" sizes="512x512" href="/icon512.png" />
   <meta name="theme-color" content="#000000" />
 
-
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(() => {
@@ -566,307 +565,290 @@ footer {
   }
 }
 
+  .winner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 100;
+    font-size: 2rem;
+    animation: fadeIn 0.4s ease-out;
+  }
+  .winner-text {
+    text-align: center;
+    animation: flash 1s infinite;
+  }
+  @keyframes flash {
+    0%, 100% { color: gold; }
+    50% { color: white; }
+  }
+
 </style>
+
 </head>
 <body>
   <div class="splash" id="splash">
-	<h1>Connect 4</h1>
-	<input id="nameInput" placeholder="Enter your name" maxlength="12"/>
-	<div class="color-buttons">
-	  <button class="redBtn" data-color="1">Red</button>
-	  <button class="yellowBtn" data-color="2">Yellow</button>
-	</div>
+    <h1>Connect 4</h1>
+    <input id="nameInput" placeholder="Enter your name" maxlength="12"/>
+    <div class="color-buttons">
+      <button class="redBtn" data-color="1">Red</button>
+      <button class="yellowBtn" data-color="2">Yellow</button>
+    </div>
   </div>
   <div class="connection-status disconnected" id="connectionStatus">Disconnected</div>
   <div class="game-header">
-	<h2>Connect 4</h2>
-	<p id="statusText">Loading...</p>
+    <h2>Connect 4</h2>
+    <p id="statusText">Loading...</p>
   </div>
   <div class="board-container" id="boardContainer">
-	<div class="board" id="board"></div>
+    <div class="board" id="board"></div>
   </div>
   <button class="reset-btn" id="inviteBtn">send invite</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
   <script>
-	const ROWS = 6, COLS = 7;
-	let player = null, turn = null, ws = null, board = [];
-	let names = {}, colors = {};
-	let winner = null;
-	let myColor = null;
-	let myName = null;
-	let moveLocked = false;
-	let gameStarted = false;
-	let reconnectAttempts = 0;
-	const MAX_RECONNECT_ATTEMPTS = 5;
-	const RECONNECT_DELAY = 2000;
+    const ROWS = 6, COLS = 7;
+    let player = null, turn = null, ws = null, board = [];
+    let names = {}, colors = {};
+    let winner = null;
+    let myColor = null;
+    let myName = null;
+    let moveLocked = false;
+    let gameStarted = false;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAY = 2000;
 
- document.querySelectorAll("#splash button").forEach(btn => {
-   btn.addEventListener("click", () => {
-     const selectedColor = parseInt(btn.dataset.color);
+    document.querySelectorAll("#splash button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const selectedColor = parseInt(btn.dataset.color);
+        myColor = selectedColor;
+        myName = document.getElementById("nameInput").value.trim() || "Player";
+        if (myName.length > 12) myName = myName.substring(0, 12);
 
-     myColor = selectedColor;
-     myName = document.getElementById("nameInput").value.trim() || "Player";
-     if (myName.length > 12) myName = myName.substring(0, 12);
-
-     document.getElementById("splash").style.display = "none";
-     init();
-   });
- });
-
-
-
-	function createBoardElement() {
-	  const boardEl = document.getElementById("board");
-	  boardEl.innerHTML = "";
-	  for (let col = 0; col < COLS; col++) {
-		const column = document.createElement("div");
-		column.className = "column";
-		column.dataset.col = col;
-		column.addEventListener("click", () => makeMove(col));
-		column.addEventListener("touchstart", (e) => {
-		  e.preventDefault();
-		  makeMove(col);
-		}, { passive: false });
-		for (let row = 0; row < ROWS; row++) {
-		  const cell = document.createElement("div");
-		  cell.className = "cell";
-		  cell.dataset.row = row;
-		  cell.dataset.col = col;
-		  column.appendChild(cell);
-		}
-		boardEl.appendChild(column);
-	  }
-	}
-
-	function renderBoard() {
-	  for (let row = 0; row < ROWS; row++) {
-		for (let col = 0; col < COLS; col++) {
-		  const cell = document.querySelector(\`[data-row="\${row}"][data-col="\${col}"]\`);
-		  cell.classList.remove("red","yellow");
-		  if (board[row][col] === 1) cell.classList.add("red");
-		  if (board[row][col] === 2) cell.classList.add("yellow");
-		}
-	  }
-	  updateStatus();
-	}
-
-	function updateStatus() {
-	  const status = document.getElementById("statusText");
-	  if (!gameStarted) {
-		status.textContent = "Waiting for opponent...";
-		return;
-	  }
-	  if (winner) {
-		status.textContent = \`\${names[winner]} wins!\`;
-		return;
-	  }
-	  if (turn === player) {
-		status.textContent = \`Your turn (\${names[player]})\`;
-	  } else {
-		status.textContent = \`\${names[turn]}'s turn\`;
-	  }
-	}
-
-	function makeMove(col) {
-	  if (!gameStarted || winner || turn !== player || moveLocked) return;
-	  moveLocked = true;
-	  try {
-		ws.send(JSON.stringify({ type: "move", col }));
-	  } catch (error) {
-		console.error("Error sending move:", error);
-		moveLocked = false;
-	  }
-	}
-
-	async function init() {
-	  createBoardElement();
-	  const urlParams = new URLSearchParams(window.location.search);
-	  const roomId = urlParams.get("room");
-
-	  if (roomId) {
-		connectWebSocket(roomId);
-	  } else {
-		try {
-		  const res = await fetch("/create");
-		  const data = await res.json();
-		  const newUrl = \`\${window.location.origin}/?room=\${data.roomId}\`;
-		  window.history.replaceState({}, "", newUrl);
-		  connectWebSocket(data.roomId);
-		} catch (error) {
-		  console.error("Error creating room:", error);
-		  document.getElementById("statusText").textContent = "failed to connect...";
-		}
-	  }
-	}
-
-function updateColorButtonStates() {
-  document.querySelectorAll("#splash button").forEach(btn => {
-    const color = parseInt(btn.dataset.color);
-    const isTaken = Object.values(colors).includes(color);
-    btn.disabled = isTaken;
-    btn.style.opacity = isTaken ? 0.5 : 1;
-    btn.style.cursor = isTaken ? "not-allowed" : "pointer";
-  });
-}
-
-
-	function connectWebSocket(roomId) {
-	  updateConnectionStatus(false);
-	  const wsUrl = \`\${location.origin.replace("http","ws")}/room/\${roomId}\`;
-	  ws = new WebSocket(wsUrl);
-	  reconnectAttempts = 0;
-
-	  ws.onopen = () => {
-		updateConnectionStatus(true);
-		document.getElementById("statusText").textContent = "Connecting...";
-	  };
-	  
-	  ws.onerror = (error) => {
-		console.error("WebSocket error:", error);
-		updateConnectionStatus(false);
-		document.getElementById("statusText").textContent = "Reconnecting...";
-		attemptReconnect(roomId);
-	  };
-	  
-	  ws.onclose = (event) => {
-		console.log("WebSocket connection closed:", event.code, event.reason);
-		updateConnectionStatus(false);
-		if (event.code !== 1000) {
-		  document.getElementById("statusText").textContent = "Disconnected. Reconnecting...";
-		  attemptReconnect(roomId);
-		}
-	  };
-	  
-ws.onmessage = (e) => {
-  try {
-    const data = JSON.parse(e.data);
-
-    if (data.type === "init") {
-      player = data.player;
-      board = data.board;
-      turn = data.turn;
-      names = data.names || names;
-      colors = data.colors || colors;
-      winner = data.winner;
-      gameStarted = data.gameStarted;
-
-      updateColorButtonStates(); 
-
-      if (myColor === null && Object.values(colors).length === 1) {
-        const takenColor = Object.values(colors)[0];
-        myColor = takenColor === 1 ? 2 : 1;
-        document.getElementById("splash").style.display = "none"; 
+        document.getElementById("splash").style.display = "none";
         init();
-        return;
+      });
+    });
+
+    function createBoardElement() {
+      const boardEl = document.getElementById("board");
+      boardEl.innerHTML = "";
+      for (let col = 0; col < COLS; col++) {
+        const column = document.createElement("div");
+        column.className = "column";
+        column.dataset.col = col;
+        column.addEventListener("click", () => makeMove(col));
+        column.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          makeMove(col);
+        }, { passive: false });
+        for (let row = 0; row < ROWS; row++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          column.appendChild(cell);
+        }
+        boardEl.appendChild(column);
       }
-
-      ws.send(JSON.stringify({ type: "name", name: myName, color: myColor }));
-      renderBoard();
-      moveLocked = false;
-      updateConnectionStatus(true);
     }
 
-    if (data.type === "update") {
-      board = data.board;
-      turn = data.turn;
-      names = data.names || names;
-      colors = data.colors || colors;
-      winner = data.winner;
-      gameStarted = data.gameStarted;
-      renderBoard();
-      moveLocked = (turn !== player || winner);
-    }
-
-    if (data.type === "names") {
-      names = data.names;
-      colors = data.colors;
-      updateColorButtonStates();
+    function renderBoard() {
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          const cell = document.querySelector(\`[data-row="\${row}"][data-col="\${col}"]\`);
+          cell.classList.remove("red","yellow");
+          if (board[row][col] === 1) cell.classList.add("red");
+          if (board[row][col] === 2) cell.classList.add("yellow");
+        }
+      }
       updateStatus();
     }
-  } catch (error) {
-    console.error("Error processing message:", error);
-  }
-};
 
+    function updateStatus() {
+      const status = document.getElementById("statusText");
+      if (!gameStarted) {
+        status.textContent = "Waiting for opponent...";
+        return;
+      }
+      if (winner) {
+        status.textContent = \`\${names[winner]} wins!\`;
+        triggerWinnerCelebration(names[winner]);   // <-- Trigger celebration
+        return;
+      }
+      if (turn === player) {
+        status.textContent = \`Your turn (\${names[player]})\`;
+      } else {
+        status.textContent = \`\${names[turn]}'s turn\`;
+      }
+    }
 
-	  const pingInterval = setInterval(() => {
-		if (ws.readyState === WebSocket.OPEN) {
-		  try {
-			ws.send(JSON.stringify({ type: "ping" }));
-		  } catch (error) {
-			clearInterval(pingInterval);
-		  }
-		}
-	  }, 15000);
+    function triggerWinnerCelebration(name) {
+      // Add overlay
+      const overlay = document.createElement("div");
+      overlay.className = "winner-overlay";
+      overlay.innerHTML = \`<div class="winner-text">🎉 \${name} WINS! 🎉</div>\`;
+      document.body.appendChild(overlay);
 
-	  window.addEventListener("beforeunload", () => {
-		clearInterval(pingInterval);
-		if (ws && ws.readyState === WebSocket.OPEN) {
-		  ws.close(1000, "User left");
-		}
-	  });
-	}
+      // Confetti animation
+      const duration = 2.5 * 1000;
+      const end = Date.now() + duration;
+      (function frame() {
+        confetti({ particleCount: 5, angle: 60, spread: 70, origin: { x: 0 } });
+        confetti({ particleCount: 5, angle: 120, spread: 70, origin: { x: 1 } });
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
 
-	function attemptReconnect(roomId) {
-	  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-		document.getElementById("statusText").textContent = "Failed to reconnect...";
-		return;
-	  }
-	  
-	  reconnectAttempts++;
-	  setTimeout(() => {
-		connectWebSocket(roomId);
-	  }, RECONNECT_DELAY * reconnectAttempts);
-	}
+      // Automatically restart after celebration
+      setTimeout(() => {
+        window.location.reload();
+      }, 2500);
+    }
 
-	function updateConnectionStatus(connected) {
-	  const statusElement = document.getElementById("connectionStatus");
-	  statusElement.textContent = connected ? "Connected" : "Disconnected";
-	  statusElement.className = connected ? "connection-status connected" : "connection-status disconnected";
-	}
+    function makeMove(col) {
+      if (!gameStarted || winner || turn !== player || moveLocked) return;
+      moveLocked = true;
+      try {
+        ws.send(JSON.stringify({ type: "move", col }));
+      } catch (error) {
+        console.error("Error sending move:", error);
+        moveLocked = false;
+      }
+    }
 
-	document.getElementById("inviteBtn").addEventListener("click", async () => {
-	  try {
-		if (navigator.share) {
-		  await navigator.share({
-			title: "Connect 4 Multiplayer",
-			text: "Join the game!",
-			url: window.location.href,
-		  });
-		} else {
-		  await navigator.clipboard.writeText(window.location.href);
-		  alert("Invite link copied to clipboard!");
-		}
-	  } catch (err) {
-		console.error("Sharing failed:", err);
-	  }
-	});
+    async function init() {
+      createBoardElement();
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get("room");
 
-	
-	document.addEventListener("visibilitychange", () => {
-	  if (document.visibilityState === "visible") {
-		const urlParams = new URLSearchParams(window.location.search);
-		const roomId = urlParams.get("room");
-		if (roomId && (!ws || ws.readyState !== WebSocket.OPEN)) {
-		  connectWebSocket(roomId);
-		}
-	  }
-	});
+      if (roomId) {
+        connectWebSocket(roomId);
+      } else {
+        try {
+          const res = await fetch("/create");
+          const data = await res.json();
+          const newUrl = \`\${window.location.origin}/?room=\${data.roomId}\`;
+          window.history.replaceState({}, "", newUrl);
+          connectWebSocket(data.roomId);
+        } catch (error) {
+          console.error("Error creating room:", error);
+          document.getElementById("statusText").textContent = "failed to connect...";
+        }
+      }
+    }
+
+    function updateColorButtonStates() {
+      document.querySelectorAll("#splash button").forEach(btn => {
+        const color = parseInt(btn.dataset.color);
+        const isTaken = Object.values(colors).includes(color);
+        btn.disabled = isTaken;
+        btn.style.opacity = isTaken ? 0.5 : 1;
+        btn.style.cursor = isTaken ? "not-allowed" : "pointer";
+      });
+    }
+
+    function connectWebSocket(roomId) {
+      updateConnectionStatus(false);
+      const wsUrl = \`\${location.origin.replace("http","ws")}/room/\${roomId}\`;
+      ws = new WebSocket(wsUrl);
+      reconnectAttempts = 0;
+
+      ws.onopen = () => {
+        updateConnectionStatus(true);
+        document.getElementById("statusText").textContent = "Connecting...";
+      };
+
+      ws.onerror = () => attemptReconnect(roomId);
+      ws.onclose = (event) => {
+        updateConnectionStatus(false);
+        if (event.code !== 1000) attemptReconnect(roomId);
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === "init") {
+            player = data.player;
+            board = data.board;
+            turn = data.turn;
+            names = data.names || names;
+            colors = data.colors || colors;
+            winner = data.winner;
+            gameStarted = data.gameStarted;
+            updateColorButtonStates();
+            ws.send(JSON.stringify({ type: "name", name: myName, color: myColor }));
+            renderBoard();
+            moveLocked = false;
+          }
+          if (data.type === "update") {
+            board = data.board;
+            turn = data.turn;
+            names = data.names || names;
+            colors = data.colors || colors;
+            winner = data.winner;
+            gameStarted = data.gameStarted;
+            renderBoard();
+            moveLocked = (turn !== player || winner);
+          }
+          if (data.type === "names") {
+            names = data.names;
+            colors = data.colors;
+            updateColorButtonStates();
+            updateStatus();
+          }
+        } catch (error) {
+          console.error("Error processing message:", error);
+        }
+      };
+    }
+
+    function attemptReconnect(roomId) {
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+      reconnectAttempts++;
+      setTimeout(() => connectWebSocket(roomId), RECONNECT_DELAY * reconnectAttempts);
+    }
+
+    function updateConnectionStatus(connected) {
+      const statusElement = document.getElementById("connectionStatus");
+      statusElement.textContent = connected ? "Connected" : "Disconnected";
+      statusElement.className = connected ? "connection-status connected" : "connection-status disconnected";
+    }
+
+    document.getElementById("inviteBtn").addEventListener("click", async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: "Connect 4 Multiplayer",
+            text: "Join the game!",
+            url: window.location.href,
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert("Invite link copied to clipboard!");
+        }
+      } catch (err) {
+        console.error("Sharing failed:", err);
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get("room");
+        if (roomId && (!ws || ws.readyState !== WebSocket.OPEN)) {
+          connectWebSocket(roomId);
+        }
+      }
+    });
   </script>
   <footer>c4.JesseJesse.com</footer>
 </body>
 </html>`;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
