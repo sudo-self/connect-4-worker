@@ -799,7 +799,7 @@ function getHTML() {
 
     function connectWebSocket(roomId) {
       updateConnectionStatus(false);
-      const wsUrl = \`\${location.origin.replace("http","ws")}/room/\${roomId}\`;
+      const wsUrl = \`\${location.origin.replace(/^http/, "ws")}/room/\${roomId}\`;
       ws = new WebSocket(wsUrl);
       reconnectAttempts = 0;
 
