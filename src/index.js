@@ -364,17 +364,13 @@ function getHTML() {
     backdrop-filter: blur(8px);
     padding: 20px;
   }
+  
   .splash h1 {
     font-size: clamp(2rem, 6vw, 3rem);
     margin-bottom: 8px;
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     letter-spacing: 2px;
     text-align: center;
-  }
-
-  .mp-glass {
-    width: fit-content;
-    margin: 0 auto 24px auto;
   }
 
   .multiplayer-text {
@@ -385,16 +381,18 @@ function getHTML() {
     text-align: center;
     background: linear-gradient(90deg, red, yellow);
     background-size: 200% auto;
+    background-position: 0 center;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: mp-shimmer 2s linear infinite;
-  }
+}
 
-  @keyframes mp-shimmer {
-    to {
-      background-position: -200% center;
-    }
-  }
+
+ @keyframes mp-shimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+}
+
 
   .splash input {
     padding: 14px;
@@ -521,26 +519,6 @@ function getHTML() {
     color: #f9ed69;
   }
 
-  .reset-btn {
-    margin-top: 20px;
-    padding: 14px 24px;
-    font-size: 1.1rem;
-    background: linear-gradient(45deg, #ff4b5c, #f9ed69);
-    border: none;
-    border-radius: 35px;
-    color: #121212;
-    cursor: pointer;
-    width: 100%;
-    max-width: 340px;
-    transition: transform 0.15s, box-shadow 0.15s;
-    font-weight: 900;
-    box-shadow: 0 8px 18px rgba(255, 150, 150, 0.6);
-  }
-  .reset-btn:active {
-    transform: scale(0.96);
-    box-shadow: 0 8px 18px rgba(255, 180, 180, 0.8);
-  }
-
   .connection-status {
     position: fixed;
     top: 10px;
@@ -624,6 +602,7 @@ function getHTML() {
     50% { color: white; }
   }
 </style>
+
 </head>
 <body>
   <div class="splash" id="splash">
