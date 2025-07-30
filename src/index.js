@@ -375,6 +375,7 @@ function getHTML() {
 
   .multiplayer-text {
     margin: 0;
+    margin-bottom: 10px;
     font-family: monospace;
     font-size: clamp(14px, 3vw, 16px);
     font-weight: bold;
@@ -392,7 +393,6 @@ function getHTML() {
     0% { background-position: 200% center; }
     100% { background-position: -200% center; }
 }
-
 
   .splash input {
     padding: 14px;
@@ -540,7 +540,7 @@ function getHTML() {
 
   footer {
     margin-top: auto;
-    padding: 10px;
+    padding: 20px;
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
