@@ -67,25 +67,10 @@ This is a real-time **multiplayer Connect 4 game** powered by **Cloudflare Worke
 
 ```
 
-## package.json
+## Planning
 
-```
+<img width="1075" height="793" alt="Screenshot 2025-07-29 at 8 02 05 PM" src="https://github.com/user-attachments/assets/15db5ae1-c659-4cb3-baa6-607918816a35" />
 
-{
-  "name": "connect4-multiplayer",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev"
-  },
-  "devDependencies": {
-    "wrangler": "^4.26.0"
-  }
-}
-
-```
 
 
 
