@@ -114,6 +114,13 @@ export class Room {
 
   async fetch(request) {
     if (request.headers.get("Upgrade") !== "websocket") {
+      if (request.method === "GET") {
+        return new Response(JSON.stringify({
+          names: this.playerNames,
+          colors: this.playerColors,
+          gameStarted: this.gameStarted
+        }), { headers: { "Content-Type": "application/json" } });
+      }
       return new Response("Expected WebSocket", { status: 400 });
     }
 
@@ -187,18 +194,19 @@ export class Room {
       if (data.type === "name") {
         this.playerNames[player] = data.name || `Player ${player}`;
 
-        if (!this.gameStarted) {
-          const requestedColor = data.color;
-          const usedColors = Object.values(this.playerColors);
-          const availableColors = [1, 2].filter((c) => !usedColors.includes(c));
+        const requestedColor = data.color;
+        const otherPlayersColors = Object.entries(this.playerColors)
+          .filter(([p]) => Number(p) !== player)
+          .map(([, c]) => c);
+        
+        const availableColors = [1, 2].filter((c) => !otherPlayersColors.includes(c));
 
-          if (!usedColors.includes(requestedColor)) {
-            this.playerColors[player] = requestedColor;
-          } else if (availableColors.length > 0) {
-            this.playerColors[player] = availableColors[0];
-          } else {
-            this.playerColors[player] = player;
-          }
+        if (!otherPlayersColors.includes(requestedColor)) {
+          this.playerColors[player] = requestedColor;
+        } else if (availableColors.length > 0) {
+          this.playerColors[player] = availableColors[0];
+        } else {
+          this.playerColors[player] = player;
         }
 
         this.broadcastNamesAndColors();
@@ -663,6 +671,24 @@ function getHTML() {
     const MAX_RECONNECT_ATTEMPTS = 5;
     const RECONNECT_DELAY = 2000;
 
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get("room");
+      if (roomId) {
+        try {
+          const res = await fetch(\`/room/\${roomId}\`);
+          if (res.ok) {
+            const data = await res.json();
+            names = data.names || {};
+            colors = data.colors || {};
+            updateColorButtonStates();
+          }
+        } catch (e) {
+          console.error("Failed to fetch room state", e);
+        }
+      }
+    });
+
     document.querySelectorAll("#splash button").forEach(btn => {
       btn.addEventListener("click", () => {
         const selectedColor = parseInt(btn.dataset.color);
@@ -792,10 +818,10 @@ function getHTML() {
     }
 
     function getSessionId() {
-      let sid = localStorage.getItem("c4_sessionId");
+      let sid = sessionStorage.getItem("c4_sessionId");
       if (!sid) {
         sid = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        localStorage.setItem("c4_sessionId", sid);
+        sessionStorage.setItem("c4_sessionId", sid);
       }
       return sid;
     }
