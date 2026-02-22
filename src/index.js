@@ -100,6 +100,7 @@ export class Room {
     this.state = state;
     this.env = env;
     this.clients = new Map();
+    this.sessions = new Map();
     this.board = Array.from({ length: 6 }, () => Array(7).fill(0));
     this.turn = 1;
     this.winner = null;
@@ -116,15 +117,31 @@ export class Room {
       return new Response("Expected WebSocket", { status: 400 });
     }
 
+    const url = new URL(request.url);
+    const sessionId = url.searchParams.get("sessionId");
+    if (!sessionId) {
+      return new Response("Expected sessionId", { status: 400 });
+    }
+
     const [client, server] = Object.values(new WebSocketPair());
     server.accept();
 
-    let player = 1;
-    while (this.clients.has(player) && player <= this.maxPlayers) player++;
-    if (player > this.maxPlayers) {
-      server.send(JSON.stringify({ type: "error", message: "Room full" }));
-      server.close(1000, "Room full");
-      return new Response(null, { status: 101, webSocket: client });
+    let player;
+    if (this.sessions.has(sessionId)) {
+      player = this.sessions.get(sessionId);
+      const oldWs = this.clients.get(player);
+      if (oldWs && oldWs.readyState === WebSocket.OPEN) {
+        oldWs.close(1000, "Replaced by new connection");
+      }
+    } else {
+      player = 1;
+      while (this.clients.has(player) && player <= this.maxPlayers) player++;
+      if (player > this.maxPlayers) {
+        server.send(JSON.stringify({ type: "error", message: "Room full" }));
+        server.close(1000, "Room full");
+        return new Response(null, { status: 101, webSocket: client });
+      }
+      this.sessions.set(sessionId, player);
     }
 
     this.clients.set(player, server);
@@ -135,7 +152,7 @@ export class Room {
       this.playerColors[player] = player;
     }
 
-    if (this.clients.size === this.maxPlayers && !this.gameStarted) {
+    if (this.sessions.size === this.maxPlayers && !this.gameStarted) {
       this.gameStarted = true;
       this.turn = 1;
       this.broadcastUpdate();
@@ -170,16 +187,18 @@ export class Room {
       if (data.type === "name") {
         this.playerNames[player] = data.name || `Player ${player}`;
 
-        const requestedColor = data.color;
-        const usedColors = Object.values(this.playerColors);
-        const availableColors = [1, 2].filter((c) => !usedColors.includes(c));
+        if (!this.gameStarted) {
+          const requestedColor = data.color;
+          const usedColors = Object.values(this.playerColors);
+          const availableColors = [1, 2].filter((c) => !usedColors.includes(c));
 
-        if (!usedColors.includes(requestedColor)) {
-          this.playerColors[player] = requestedColor;
-        } else if (availableColors.length > 0) {
-          this.playerColors[player] = availableColors[0];
-        } else {
-          this.playerColors[player] = player;
+          if (!usedColors.includes(requestedColor)) {
+            this.playerColors[player] = requestedColor;
+          } else if (availableColors.length > 0) {
+            this.playerColors[player] = availableColors[0];
+          } else {
+            this.playerColors[player] = player;
+          }
         }
 
         this.broadcastNamesAndColors();
@@ -198,16 +217,12 @@ export class Room {
     });
 
     const handleClose = () => {
-      clearInterval(pingInterval);
-      this.pingIntervals.delete(server);
-      this.clients.delete(player);
-      delete this.playerNames[player];
-      delete this.playerColors[player];
-
-      if (this.clients.size < this.maxPlayers) {
-        this.gameStarted = false;
+      if (this.clients.get(player) === server) {
+        clearInterval(pingInterval);
+        this.pingIntervals.delete(server);
+        this.clients.delete(player);
+        this.broadcastUpdate();
       }
-      this.broadcastUpdate();
     };
 
     server.addEventListener("close", handleClose);
@@ -776,9 +791,19 @@ function getHTML() {
       });
     }
 
+    function getSessionId() {
+      let sid = localStorage.getItem("c4_sessionId");
+      if (!sid) {
+        sid = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem("c4_sessionId", sid);
+      }
+      return sid;
+    }
+
     function connectWebSocket(roomId) {
       updateConnectionStatus(false);
-      const wsUrl = \`\${location.origin.replace(/^http/, "ws")}/room/\${roomId}\`;
+      const sessionId = getSessionId();
+      const wsUrl = \`\${location.origin.replace(/^http/, "ws")}/room/\${roomId}?sessionId=\${sessionId}\`;
       ws = new WebSocket(wsUrl);
       reconnectAttempts = 0;
 
